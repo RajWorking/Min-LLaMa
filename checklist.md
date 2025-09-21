@@ -2,12 +2,12 @@
 ## Assignment Checklist
 
 ### Setup & Environment
-- [ ] Run `bash setup.sh` successfully
-- [ ] Verify model weights downloaded (stories42M.pt)
+- [x] Run `bash setup.sh` successfully
+- [x] Verify model weights downloaded (stories42M.pt)
 
 ### Core Implementation
 - [ ] **llama.py**
-- [ ] **rope.py**
+- [x] **rope.py**
 - [ ] **optimizer.py**
 - [ ] **classifier.py**
 - [ ] **lora.py**

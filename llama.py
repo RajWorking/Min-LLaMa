@@ -42,10 +42,10 @@ class LayerNorm(torch.nn.Module):
         Returns:
             torch.Tensor: The normalized tensor.
         """
-        mean = torch.mean(x)
-        std = torch.sqrt(torch.var(x, correction = 0) + self.eps)
-        output = self.weight * ((x - mean) / std) + self.bias
-        return output
+        mean = torch.mean(x, dim=-1, keepdim=True)
+        std = torch.sqrt(
+            torch.var(x, dim=-1, correction=0, keepdim=True) + self.eps)
+        return (x - mean) / std
 
     def forward(self, x):
         """
@@ -99,7 +99,8 @@ class Attention(nn.Module):
         Make sure to use attention_dropout (self.attn_dropout) on the computed
         attention matrix before applying it to the value tensor.
         '''
-        scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(self.head_dim)
+        scores = torch.matmul(query, key.transpose(-2, -1)
+                              ) / math.sqrt(self.head_dim)
         attn = F.softmax(scores, dim=-1)
         attn = self.attn_dropout(attn)
         output = torch.matmul(attn, value)
@@ -212,13 +213,9 @@ class LlamaLayer(nn.Module):
            output of the feed-forward network
         '''
         # pre-layer norm is better for gradient propogation.
-        x = self.attention_norm(x)
-        attn_x = self.attention(x)
-        x = x + attn_x
-        x = self.ffn_norm(x)
-        x = attn_x + self.feed_forward(x)
+        x = x + self.attention(self.attention_norm(x))
+        x = x + self.feed_forward(self.ffn_norm(x))
         return x
-
 
 
 class Llama(LlamaPreTrainedModel):
@@ -300,11 +297,11 @@ class Llama(LlamaPreTrainedModel):
             logits, _ = self(idx_cond)
             logits = logits[:, -1, :]  # crop to just the final time step
             # todo
-            raise NotImplementedError
 
             if temperature == 0.0:
                 # select the single most likely index
-                idx_next = None
+                print(logits.shape)
+                idx_next = torch.argmax(logits, dim=1)
             else:
                 '''
                 Perform temperature sampling with epsilon sampling:
@@ -314,6 +311,7 @@ class Llama(LlamaPreTrainedModel):
                 4) Renormalize the filtered probabilities so they sum to 1.
                 5) Sample from this filtered probability distribution.
                 '''
+                probs = F.softmax(logits, dim=-1)
                 idx_next = None
             # append sampled index to the running sequence and continue
             idx = torch.cat((idx, idx_next), dim=1)
