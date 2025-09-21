@@ -42,8 +42,10 @@ class LayerNorm(torch.nn.Module):
         Returns:
             torch.Tensor: The normalized tensor.
         """
-        # todo
-        raise NotImplementedError
+        mean = torch.mean(x)
+        std = torch.sqrt(torch.var(x, correction = 0) + self.eps)
+        output = self.weight * ((x - mean) / std) + self.bias
+        return output
 
     def forward(self, x):
         """
@@ -97,8 +99,11 @@ class Attention(nn.Module):
         Make sure to use attention_dropout (self.attn_dropout) on the computed
         attention matrix before applying it to the value tensor.
         '''
-        # todo
-        raise NotImplementedError
+        scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(self.head_dim)
+        attn = F.softmax(scores, dim=-1)
+        attn = self.attn_dropout(attn)
+        output = torch.matmul(attn, value)
+        return output
 
     def forward(
         self,
@@ -206,8 +211,14 @@ class LlamaLayer(nn.Module):
         5) add a residual connection from the unnormalized self-attention output to the
            output of the feed-forward network
         '''
-        # todo
-        raise NotImplementedError
+        # pre-layer norm is better for gradient propogation.
+        x = self.attention_norm(x)
+        attn_x = self.attention(x)
+        x = x + attn_x
+        x = self.ffn_norm(x)
+        x = attn_x + self.feed_forward(x)
+        return x
+
 
 
 class Llama(LlamaPreTrainedModel):
@@ -312,14 +323,14 @@ class Llama(LlamaPreTrainedModel):
 
 def load_pretrained(checkpoint):
     # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = 'mps' if torch.cuda.is_available() else 'cpu'
     # dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32' or 'bfloat16' or 'float16'
     dtype = "float32"
 
     torch.backends.cuda.matmul.allow_tf32 = True  # allow tf32 on matmul
     torch.backends.cudnn.allow_tf32 = True  # allow tf32 on cudnn
     # for later use in torch.autocast
-    device_type = 'cuda' if 'cuda' in device else 'cpu'
+    device_type = 'mps' if 'mps' in device else 'cpu'
     ptdtype = {'float32': torch.float32,
                'bfloat16': torch.bfloat16, 'float16': torch.float16}[dtype]
     ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(
