@@ -58,7 +58,7 @@ class LayerNorm(torch.nn.Module):
         """
         output = self._norm(x.float()).type_as(x)
         return output * self.weight + self.bias
-    
+
 
 class Attention(nn.Module):
     def __init__(self, config: LlamaConfig):
@@ -71,10 +71,14 @@ class Attention(nn.Module):
         self.n_rep = self.n_local_heads // self.n_local_kv_heads
         self.head_dim = config.dim // config.n_heads
         self.max_seq_len = config.max_seq_len
-        self.compute_query = nn.Linear(config.dim, config.n_heads * self.head_dim, bias=False)
-        self.compute_key = nn.Linear(config.dim, self.n_kv_heads * self.head_dim, bias=False)
-        self.compute_value = nn.Linear(config.dim, self.n_kv_heads * self.head_dim, bias=False)
-        self.compute_output = nn.Linear(config.n_heads * self.head_dim, config.dim, bias=False)
+        self.compute_query = nn.Linear(
+            config.dim, config.n_heads * self.head_dim, bias=False)
+        self.compute_key = nn.Linear(
+            config.dim, self.n_kv_heads * self.head_dim, bias=False)
+        self.compute_value = nn.Linear(
+            config.dim, self.n_kv_heads * self.head_dim, bias=False)
+        self.compute_output = nn.Linear(
+            config.n_heads * self.head_dim, config.dim, bias=False)
         self.attn_dropout = nn.Dropout(config.dropout)
         self.resid_dropout = nn.Dropout(config.dropout)
         self.dropout = config.dropout
@@ -114,12 +118,16 @@ class Attention(nn.Module):
         query = self.compute_query(x)
         key = self.compute_key(x)
         value = self.compute_value(x)
-        query = query.view(batch_size, seqlen, self.n_local_heads, self.head_dim)
-        key = key.view(batch_size, seqlen, self.n_local_kv_heads, self.head_dim)
-        value = value.view(batch_size, seqlen, self.n_local_kv_heads, self.head_dim)
+        query = query.view(batch_size, seqlen,
+                           self.n_local_heads, self.head_dim)
+        key = key.view(batch_size, seqlen,
+                       self.n_local_kv_heads, self.head_dim)
+        value = value.view(batch_size, seqlen,
+                           self.n_local_kv_heads, self.head_dim)
 
         # RoPE relative positional embeddings
-        query, key = apply_rotary_emb(query, key, self.head_dim, self.max_seq_len)
+        query, key = apply_rotary_emb(
+            query, key, self.head_dim, self.max_seq_len)
 
         # Grouped multiquery attention: expand out keys and values.
         # Convert both to:
@@ -134,7 +142,8 @@ class Attention(nn.Module):
         output = self.compute_query_key_value_scores(query, key, value)
 
         # restore time as batch dimension and concat heads
-        output = output.transpose(1, 2).contiguous().view(batch_size, seqlen, -1)
+        output = output.transpose(1, 2).contiguous().view(
+            batch_size, seqlen, -1)
 
         # final projection into the residual stream
         output = self.resid_dropout(self.compute_output(output))
@@ -147,7 +156,8 @@ class FeedForward(nn.Module):
         if hidden_dim is None:
             hidden_dim = 4 * dim
             hidden_dim = int(2 * hidden_dim / 3)
-            hidden_dim = multiple_of * ((hidden_dim + multiple_of - 1) // multiple_of)
+            hidden_dim = multiple_of * \
+                ((hidden_dim + multiple_of - 1) // multiple_of)
         self.w1 = nn.Linear(dim, hidden_dim, bias=False)
         self.w2 = nn.Linear(hidden_dim, dim, bias=False)
         self.w3 = nn.Linear(dim, hidden_dim, bias=False)
@@ -199,6 +209,7 @@ class LlamaLayer(nn.Module):
         # todo
         raise NotImplementedError
 
+
 class Llama(LlamaPreTrainedModel):
     def __init__(self, config: LlamaConfig):
         '''
@@ -219,7 +230,8 @@ class Llama(LlamaPreTrainedModel):
         self.output = nn.Linear(config.dim, config.vocab_size, bias=False)
 
         # share the unembedding parameters with the embedding parameters
-        self.tok_embeddings.weight = self.output.weight # https://paperswithcode.com/method/weight-tying
+        # https://paperswithcode.com/method/weight-tying
+        self.tok_embeddings.weight = self.output.weight
 
         # some useful precompute for the RoPE relative positional embeddings
 
@@ -228,7 +240,8 @@ class Llama(LlamaPreTrainedModel):
         # apply special scaled init to the residual projections, per GPT-2 paper
         for pn, p in self.named_parameters():
             if pn.endswith('w3.weight') or pn.endswith('compute_output.weight'):
-                torch.nn.init.normal_(p, mean=0.0, std=0.02/math.sqrt(2 * config.n_layers))
+                torch.nn.init.normal_(
+                    p, mean=0.0, std=0.02/math.sqrt(2 * config.n_layers))
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
@@ -252,7 +265,8 @@ class Llama(LlamaPreTrainedModel):
             logits = self.output(h)
         else:
             # inference-time mini-optimization: only forward the output on the very last position
-            logits = self.output(h[:, [-1], :]) # note: using list [-1] to preserve the time dim
+            # note: using list [-1] to preserve the time dim
+            logits = self.output(h[:, [-1], :])
 
         return logits, h
 
@@ -269,13 +283,14 @@ class Llama(LlamaPreTrainedModel):
         """
         for _ in range(max_new_tokens):
             # if the sequence context is growing too long we must crop it at block_size
-            idx_cond = idx if idx.size(1) <= self.params.max_seq_len else idx[:, -self.params.max_seq_len:]
+            idx_cond = idx if idx.size(
+                1) <= self.params.max_seq_len else idx[:, -self.params.max_seq_len:]
             # forward the model to get the logits for the index in the sequence
             logits, _ = self(idx_cond)
-            logits = logits[:, -1, :] # crop to just the final time step
+            logits = logits[:, -1, :]  # crop to just the final time step
             # todo
             raise NotImplementedError
-            
+
             if temperature == 0.0:
                 # select the single most likely index
                 idx_next = None
@@ -291,28 +306,33 @@ class Llama(LlamaPreTrainedModel):
                 idx_next = None
             # append sampled index to the running sequence and continue
             idx = torch.cat((idx, idx_next), dim=1)
-        
+
         return idx
 
+
 def load_pretrained(checkpoint):
-  device = 'cuda' if torch.cuda.is_available() else 'cpu' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
-  #dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32' or 'bfloat16' or 'float16'
-  dtype = "float32"
+    # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    # dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32' or 'bfloat16' or 'float16'
+    dtype = "float32"
 
-  torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
-  torch.backends.cudnn.allow_tf32 = True # allow tf32 on cudnn
-  device_type = 'cuda' if 'cuda' in device else 'cpu' # for later use in torch.autocast
-  ptdtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torch.float16}[dtype]
-  ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=device_type, dtype=ptdtype)
+    torch.backends.cuda.matmul.allow_tf32 = True  # allow tf32 on matmul
+    torch.backends.cudnn.allow_tf32 = True  # allow tf32 on cudnn
+    # for later use in torch.autocast
+    device_type = 'cuda' if 'cuda' in device else 'cpu'
+    ptdtype = {'float32': torch.float32,
+               'bfloat16': torch.bfloat16, 'float16': torch.float16}[dtype]
+    ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(
+        device_type=device_type, dtype=ptdtype)
 
-  # init from a model saved in a specific directory
-  checkpoint_dict = torch.load(checkpoint, map_location=device)
-  config = LlamaConfig(**checkpoint_dict['model_args'])
-  model = Llama(config)
-  state_dict = checkpoint_dict['model']
-  unwanted_prefix = '_orig_mod.'
-  for k,v in list(state_dict.items()):
-      if k.startswith(unwanted_prefix):
-          state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
-  model.load_state_dict(state_dict, strict=False)
-  return model
+    # init from a model saved in a specific directory
+    checkpoint_dict = torch.load(checkpoint, map_location=device)
+    config = LlamaConfig(**checkpoint_dict['model_args'])
+    model = Llama(config)
+    state_dict = checkpoint_dict['model']
+    unwanted_prefix = '_orig_mod.'
+    for k, v in list(state_dict.items()):
+        if k.startswith(unwanted_prefix):
+            state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
+    model.load_state_dict(state_dict, strict=False)
+    return model

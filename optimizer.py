@@ -16,14 +16,19 @@ class AdamW(Optimizer):
             max_grad_norm: float = None,
     ):
         if lr < 0.0:
-            raise ValueError("Invalid learning rate: {} - should be >= 0.0".format(lr))
+            raise ValueError(
+                "Invalid learning rate: {} - should be >= 0.0".format(lr))
         if not 0.0 <= betas[0] < 1.0:
-            raise ValueError("Invalid beta parameter: {} - should be in [0.0, 1.0[".format(betas[0]))
+            raise ValueError(
+                "Invalid beta parameter: {} - should be in [0.0, 1.0[".format(betas[0]))
         if not 0.0 <= betas[1] < 1.0:
-            raise ValueError("Invalid beta parameter: {} - should be in [0.0, 1.0[".format(betas[1]))
+            raise ValueError(
+                "Invalid beta parameter: {} - should be in [0.0, 1.0[".format(betas[1]))
         if not 0.0 <= eps:
-            raise ValueError("Invalid epsilon value: {} - should be >= 0.0".format(eps))
-        defaults = dict(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay, correct_bias=correct_bias, max_grad_norm=max_grad_norm)
+            raise ValueError(
+                "Invalid epsilon value: {} - should be >= 0.0".format(eps))
+        defaults = dict(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay,
+                        correct_bias=correct_bias, max_grad_norm=max_grad_norm)
         super().__init__(params, defaults)
 
     def step(self, closure: Callable = None):
@@ -36,13 +41,14 @@ class AdamW(Optimizer):
             # TODO: Clip gradients if max_grad_norm is set
             if group['max_grad_norm'] is not None:
                 raise NotImplementedError()
-            
+
             for p in group["params"]:
                 if p.grad is None:
                     continue
                 grad = p.grad.data
                 if grad.is_sparse:
-                    raise RuntimeError("Adam does not support sparse gradients, please consider SparseAdam instead")
+                    raise RuntimeError(
+                        "Adam does not support sparse gradients, please consider SparseAdam instead")
 
                 raise NotImplementedError()
 
@@ -55,7 +61,7 @@ class AdamW(Optimizer):
                 # TODO: Update first and second moments of the gradients
 
                 # TODO: Bias correction
-                # Please note that we are using the "efficient version" given in Algorithm 2 
+                # Please note that we are using the "efficient version" given in Algorithm 2
                 # https://arxiv.org/pdf/1711.05101
 
                 # TODO: Update parameters
