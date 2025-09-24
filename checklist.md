@@ -6,17 +6,17 @@
 - [x] Verify model weights downloaded (stories42M.pt)
 
 ### Core Implementation
-- [ ] **llama.py**
+- [x] **llama.py**
 - [x] **rope.py**
 - [ ] **optimizer.py**
 - [ ] **classifier.py**
-- [ ] **lora.py**
+- [x] **lora.py**
 
 ### Testing & Validation
-- [ ] Pass `python sanity_check.py`
+- [x] Pass `python sanity_check.py`
 - [ ] Pass `python optimizer_test.py` 
-- [ ] Pass `python rope_test.py` 
-- [ ] Generate coherent text with `python run_llama.py --option generate`
+- [x] Pass `python rope_test.py` 
+- [x] Generate coherent text with `python run_llama.py --option generate`
 - [ ] Complete SST zero-shot prompting
 - [ ] Complete CFIMDB zero-shot prompting  
 - [ ] Complete SST fine-tuning
