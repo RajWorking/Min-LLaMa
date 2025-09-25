@@ -20,9 +20,9 @@
 - [x] Complete SST zero-shot prompting
 - [x] Complete CFIMDB zero-shot prompting  
 - [x] Complete SST fine-tuning
-- [ ] Complete CFIMDB fine-tuning
-- [ ] Complete SST LoRA fine-tuning
-- [ ] Complete CFIMDB LoRA fine-tuning
+- [x] Complete CFIMDB fine-tuning
+- [x] Complete SST LoRA fine-tuning
+- [x] Complete CFIMDB LoRA fine-tuning
 
 ### Advanced Features (Optional - A+)
 - [ ] Other advanced techniques (see A+ options above)
