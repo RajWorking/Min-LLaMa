@@ -8,13 +8,13 @@
 ### Core Implementation
 - [x] **llama.py**
 - [x] **rope.py**
-- [ ] **optimizer.py**
+- [x] **optimizer.py**
 - [ ] **classifier.py**
 - [x] **lora.py**
 
 ### Testing & Validation
 - [x] Pass `python sanity_check.py`
-- [ ] Pass `python optimizer_test.py` 
+- [x] Pass `python optimizer_test.py` 
 - [x] Pass `python rope_test.py` 
 - [x] Generate coherent text with `python run_llama.py --option generate`
 - [ ] Complete SST zero-shot prompting
