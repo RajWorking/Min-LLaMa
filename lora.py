@@ -50,7 +50,7 @@ class LoRALayer(nn.Module):
             Output tensor of shape (batch, seq, out_features)
         """
         original_layer_output = self.original_layer(x)
-        lora_output = self.scaling * self.lora_B(self.lora_A(x))
+        lora_output = self.scaling * (x @ (self.lora_B @ self.lora_A).T)
         return original_layer_output + lora_output
 
 

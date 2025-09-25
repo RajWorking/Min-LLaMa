@@ -63,6 +63,6 @@ class LlamaEmbeddingClassifier(torch.nn.Module):
         hidden_state = hidden_state[:, -1, :]
         output = self.dropout(hidden_state)
         logits = self.classifier_head(output)
-        log_probs = F.softmax(logits, dim=-1)
+        log_probs = F.log_softmax(logits, dim=-1)
         return log_probs
 
