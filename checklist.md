@@ -9,7 +9,7 @@
 - [x] **llama.py**
 - [x] **rope.py**
 - [x] **optimizer.py**
-- [ ] **classifier.py**
+- [x] **classifier.py**
 - [x] **lora.py**
 
 ### Testing & Validation
@@ -17,9 +17,9 @@
 - [x] Pass `python optimizer_test.py` 
 - [x] Pass `python rope_test.py` 
 - [x] Generate coherent text with `python run_llama.py --option generate`
-- [ ] Complete SST zero-shot prompting
-- [ ] Complete CFIMDB zero-shot prompting  
-- [ ] Complete SST fine-tuning
+- [x] Complete SST zero-shot prompting
+- [x] Complete CFIMDB zero-shot prompting  
+- [x] Complete SST fine-tuning
 - [ ] Complete CFIMDB fine-tuning
 - [ ] Complete SST LoRA fine-tuning
 - [ ] Complete CFIMDB LoRA fine-tuning
